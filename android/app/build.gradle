@@ -95,6 +95,12 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
+        release {
+            storeFile file('nakupovanje-release-key.keystore')
+            storePassword 'HJv*54ATb8@5mV^5Kn29'
+            keyAlias 'nakupovanje-key-alias'
+            keyPassword 'HJv*54ATb8@5mV^5Kn29'
+        }
     }
     buildTypes {
         debug {
