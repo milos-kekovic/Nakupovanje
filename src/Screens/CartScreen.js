@@ -79,6 +79,7 @@ export default function CartScreen({ route, navigation }) {
   }
 
   const printReceipt = async ({ user, cartData }) => {
+    console.log('START!');
     try {
       const printers = await ThermalPrinterModule.getBluetoothDeviceList();
       console.log('Available Printers:', printers);
