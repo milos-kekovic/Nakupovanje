@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { View, Text, FlatList, StyleSheet, Image, TouchableOpacity, ImageBackground } from 'react-native';
 import { CustomButton } from '../Components';
-import supabase from '../supabaseClient';
+import { fetchChocolates, fetchIngredients } from '../supabase/supabaseClient'; // ✅ Import fetch functions
 
 export default function ProductsScreen({ navigation }) {
   const [products, setProducts] = useState([]);
@@ -13,35 +13,22 @@ export default function ProductsScreen({ navigation }) {
   const [selectedIngredients, setSelectedIngredients] = useState([]); // Track selected ingredients
   const [selectedChocolate, setSelectedChocolate] = useState(null); // Track selected chocolate
 
-  const fetchProducts = async () => {
-    setLoadingProducts(true);
-    const { data: chocolates, error } = await supabase.from('chocolates').select('*');
-
-    if (error) {
-      console.error('Error fetching products:', error);
-    } else {
-      setProducts(chocolates);
-    }
-    setLoadingProducts(false);
-  };
-
-  const fetchIngredients = async () => {
-    setLoadingIngredients(true);
-    const { data: chocolateIngredients, error } = await supabase
-      .from('chocolate_ingredients')
-      .select('*');
-
-    if (error) {
-      console.error('Error fetching ingredients:', error);
-    } else {
-      setIngredients(chocolateIngredients);
-    }
-    setLoadingIngredients(false);
-  };
-
   useEffect(() => {
-    fetchProducts();
-    fetchIngredients();
+    const loadData = async () => {
+      setLoadingProducts(true);
+      setLoadingIngredients(true);
+
+      const chocolates = await fetchChocolates();
+      const chocolateIngredients = await fetchIngredients();
+
+      setProducts(chocolates);
+      setIngredients(chocolateIngredients);
+
+      setLoadingProducts(false);
+      setLoadingIngredients(false);
+    };
+
+    loadData();
   }, []);
 
   useEffect(() => {
@@ -68,6 +55,7 @@ export default function ProductsScreen({ navigation }) {
   };
 
   const toggleIngredient = (ingredient) => {
+    console.log('selectedIngredients ', selectedIngredients)
     setSelectedIngredients((prevSelected) =>
       prevSelected.includes(ingredient.id)
         ? prevSelected.filter((id) => id !== ingredient.id)
@@ -153,7 +141,7 @@ export default function ProductsScreen({ navigation }) {
                     onPress={() => toggleIngredient(item)}
                   >
                     <Image
-                      source={{ uri: item.image_url }}
+                      source={{ uri: item.image_url + "?timestamp=" + new Date().getTime() }}
                       style={styles.productIngredientsImage}
                       resizeMode="contain"
                     />
