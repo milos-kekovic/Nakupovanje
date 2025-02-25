@@ -12,8 +12,6 @@ export const fetchLanguages = async () => {
     const { data, error } = await supabase
     .from('languages')
     .select('language_code, language_name, flag_url') // ✅ Fetch only required columns
-    .limit(20) // ✅ Limit the number of rows fetched
-    .timeout(10000); // ✅ Set a timeout to prevent infinite wait
     if (error) throw error;
     
     console.log("✅ Languages from Supabase:", data); // 🔍 Debug log

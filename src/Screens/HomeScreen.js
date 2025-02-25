@@ -7,6 +7,7 @@ import { fontSize as FS } from '../Constants/Dimensions';
 import Logo from '../Components/Logo';
 import { useTranslation } from 'react-i18next';
 import { fetchLanguages, loadTranslations } from '../supabase/supabaseClient'; // ✅ Import languages from Supabase
+import { useFontSize, useElementPadding, useElementMargin, useElementSize } from '../Constants/Dimensions'
 
 const BackgroundImage = require('../../assets/chocolate-background.jpg');
 
@@ -20,6 +21,7 @@ export default function HomeScreen({ navigation }) {
   const [languages, setLanguages] = useState([]); // ✅ Store languages fetched from Supabase
   const selectedLanguageCode = language || i18n.language;
   const [selectedLanguage, setSelectedLanguage] = useState(null);
+  const scaledElementSize = useElementSize();
 
   // ✅ Fetch languages from Supabase
   useEffect(() => {
@@ -86,9 +88,9 @@ export default function HomeScreen({ navigation }) {
       source={BackgroundImage} 
       resizeMode="stretch"
     >
-      <View style={{flex: 0.4, justifyContent: 'center', alignItems: 'center'}}>
+      <View style={{flex: 0.4, width: '95%', justifyContent: 'flex-start', alignItems: 'flex-end'}}>
         {/* Language Dropdown */}
-        <View style={{ width: '50%', backgroundColor: 'red' }}>
+        <View>
           <CustomPicker
             style={{ width: '100%' }}
             label={translations.choose_language}
@@ -102,9 +104,9 @@ export default function HomeScreen({ navigation }) {
             options={languages}
           />
         </View>
-        <Logo isPopup={true} size={FS * 5} />
         </View>
         <View style={{flex: 0.6}}>
+        <Logo isPopup={true} size={scaledElementSize * 2} />
         <ThemeInput
           key={forceUpdate}
           style={{ marginBottom: FS * 0.5}}

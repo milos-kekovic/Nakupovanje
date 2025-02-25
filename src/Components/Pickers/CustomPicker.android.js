@@ -2,7 +2,7 @@ import React, { useContext, useState, useEffect } from 'react';
 import { View, Image, Text, TouchableOpacity, Modal, FlatList, StyleSheet } from 'react-native';
 import { ThemeContext } from '../../Context/ThemeContext';
 import { DownIcon } from '../../Components/Icons';
-import { useFontSize, useElementPadding, useElementMargin } from '../../Constants/Dimensions';
+import { useFontSize, useElementPadding, useElementMargin, useElementSize } from '../../Constants/Dimensions';
 
 export default function CustomPicker(props) {
   const { theme } = useContext(ThemeContext);
@@ -12,6 +12,7 @@ export default function CustomPicker(props) {
   const scaledFontSize = useFontSize();
   const scaledElementPadding = useElementPadding();
   const scaledElementMargin = useElementMargin();
+  const scaledElementSize = useElementSize();
 
   useEffect(() => {
     // ✅ Set the initial selected item based on selectedValue
@@ -28,11 +29,12 @@ export default function CustomPicker(props) {
         style={[styles.button, { borderColor: theme.line, backgroundColor: theme.secondaryColor, padding: scaledElementPadding }]} 
         onPress={() => setModalVisible(true)}
       >
-        {selectedItem?.icon && <Image source={selectedItem.icon} style={styles.logo} />}
-        <Text style={[styles.buttonText, { fontSize: scaledFontSize, color: theme.primaryColor }]}>
+        {selectedItem?.icon && <Image source={selectedItem.icon} style={{width: scaledElementSize, height: scaledElementSize}} />}
+        {/* <Text style={[styles.buttonText, { fontSize: scaledFontSize, color: theme.primaryColor }]}>
           {selectedItem ? selectedItem.label : placeholder}
-        </Text>
-        <DownIcon size={scaledFontSize * 1.5} color={theme.text} name="chevron-down" type="material-community" />
+        </Text> */}
+        {/* <DownIcon size={scaledFontSize * 1.5} color={theme.text} name="chevron-down" type="material-community" /> */}
+        {/* <DownIcon size={scaledFontSize * 1.5} /> */}
       </TouchableOpacity>
 
       {/* Modal for Language Selection */}
@@ -61,7 +63,7 @@ export default function CustomPicker(props) {
                     }
                   }}
                 >
-                  {item.icon && <Image source={item.icon} style={styles.logo} />}
+                  {item.icon && <Image source={item.icon} style={{width: scaledElementSize, height: scaledElementSize, resizeMode: 'contain'}} />}
                   <Text style={[styles.itemText, { color: theme.primaryColor }]}>{item.label}</Text>
                 </TouchableOpacity>
               )}
@@ -85,11 +87,6 @@ const styles = StyleSheet.create({
   buttonText: {
     flex: 1,
     marginLeft: 10,
-  },
-  logo: {
-    width: 24,
-    height: 24,
-    resizeMode: 'contain',
   },
   modalOverlay: {
     flex: 1,
