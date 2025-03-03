@@ -1,21 +1,24 @@
 import React, { useContext, useState, useEffect } from 'react';
-import { View, Image, Text, TouchableOpacity, Modal, FlatList, StyleSheet } from 'react-native';
+import { 
+  View, Text, TouchableOpacity, Modal, FlatList, StyleSheet, Image 
+} from 'react-native';
 import { ThemeContext } from '../../Context/ThemeContext';
-import { DownIcon } from '../../Components/Icons';
-import { useFontSize, useElementPadding, useElementMargin, useElementSize } from '../../Constants/Dimensions';
+import { DownIcon } from '../../Components/Icons'; 
+import { useFontSize, useElementPadding, useElementMargin, useElementSize, useBorderWidth, useBorderRadius } from '../../Constants/Dimensions';
 
-export default function CustomPicker(props) {
+export default function CustomPicker({ selectedValue, onValueChange, options, placeholder = 'Select a language' }) {
   const { theme } = useContext(ThemeContext);
-  const { selectedValue, onValueChange, options, placeholder = 'Select a language' } = props;
   const [selectedItem, setSelectedItem] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
+
   const scaledFontSize = useFontSize();
   const scaledElementPadding = useElementPadding();
   const scaledElementMargin = useElementMargin();
   const scaledElementSize = useElementSize();
+  const scaledBorderWidth = useBorderWidth();
+  const scaledBorderRadius = useBorderRadius();
 
   useEffect(() => {
-    // ✅ Set the initial selected item based on selectedValue
     if (selectedValue) {
       const foundItem = options.find(item => item.code === selectedValue.code);
       setSelectedItem(foundItem || null);
@@ -23,18 +26,35 @@ export default function CustomPicker(props) {
   }, [selectedValue, options]);
 
   return (
-    <View style={{ width: '100%', marginVertical: scaledElementMargin }}>
-      {/* Custom Button to Open Picker */}
+    <View style={{ alignSelf: 'flex-start' }}> 
+      {/* Only takes as much space as needed */}
       <TouchableOpacity 
-        style={[styles.button, { borderColor: theme.line, backgroundColor: theme.secondaryColor, padding: scaledElementPadding }]} 
+        style = {
+          {
+            flexDirection: 'row',  // ✅ Keep flag, text, and icon aligned horizontally
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            borderWidth: scaledBorderWidth,
+            borderRadius: scaledBorderRadius,
+            alignSelf: 'flex-start',
+            borderColor: theme.primaryColor,
+            backgroundColor: theme.secondaryColor,
+            padding: scaledElementPadding,
+          }
+        } 
         onPress={() => setModalVisible(true)}
+        activeOpacity={0.7}
       >
-        {selectedItem?.icon && <Image source={selectedItem.icon} style={{width: scaledElementSize, height: scaledElementSize}} />}
-        {/* <Text style={[styles.buttonText, { fontSize: scaledFontSize, color: theme.primaryColor }]}>
+        {selectedItem?.icon && (
+          <Image 
+            source={selectedItem.icon} 
+            style={{ width: scaledElementSize, height: scaledElementSize, marginRight: 8 }} 
+          />
+        )}
+        <Text style={[styles.buttonText, { fontSize: scaledFontSize, color: theme.primaryColor }]}>
           {selectedItem ? selectedItem.label : placeholder}
-        </Text> */}
-        {/* <DownIcon size={scaledFontSize * 1.5} color={theme.text} name="chevron-down" type="material-community" /> */}
-        {/* <DownIcon size={scaledFontSize * 1.5} /> */}
+        </Text>
+        <DownIcon size={scaledFontSize * 1.5} color={theme.text} name="chevron-down" type="material-community" />
       </TouchableOpacity>
 
       {/* Modal for Language Selection */}
@@ -42,28 +62,31 @@ export default function CustomPicker(props) {
         visible={modalVisible} 
         transparent 
         animationType="slide"
-        onRequestClose={() => setModalVisible(false)} // ✅ Close modal on Android back button
+        onRequestClose={() => setModalVisible(false)}
       >
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContainer, { backgroundColor: theme.secondaryColor }]}>
             <FlatList
               data={options}
-              keyExtractor={(item, index) => (item.code ? item.code.toString() : `item-${index}`)} // ✅ Unique key
+              keyExtractor={(item) => item.code.toString()}
               renderItem={({ item }) => (
                 <TouchableOpacity 
-                  style={[styles.item, { padding: scaledElementPadding }]}
+                  style={[
+                    styles.item, 
+                    selectedItem?.code === item.code && styles.selectedItem
+                  ]}
                   onPress={() => {
-                    console.log("Selected item:", item);
-                    if (item && item.code) {
-                      setSelectedItem(item); // ✅ Update selected item
-                      onValueChange(item); // ✅ Pass the full item object
-                      setModalVisible(false); // ✅ Close modal
-                    } else {
-                      console.warn("Invalid item selected:", item);
-                    }
+                    setSelectedItem(item);
+                    onValueChange(item);
+                    setModalVisible(false);
                   }}
                 >
-                  {item.icon && <Image source={item.icon} style={{width: scaledElementSize, height: scaledElementSize, resizeMode: 'contain'}} />}
+                  {item.icon && (
+                    <Image 
+                      source={item.icon} 
+                      style={{ width: scaledElementSize, height: scaledElementSize, marginRight: 10 }} 
+                    />
+                  )}
                   <Text style={[styles.itemText, { color: theme.primaryColor }]}>{item.label}</Text>
                 </TouchableOpacity>
               )}
@@ -75,18 +98,10 @@ export default function CustomPicker(props) {
   );
 }
 
-// ✅ Styles
+// ✅ Updated Styles
 const styles = StyleSheet.create({
-  button: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderRadius: 4,
-    justifyContent: 'space-between',
-  },
   buttonText: {
-    flex: 1,
-    marginLeft: 10,
+    marginHorizontal: 5, // ✅ Small spacing to prevent stretching
   },
   modalOverlay: {
     flex: 1,
@@ -95,18 +110,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalContainer: {
-    width: '50%',
-    borderRadius: 8,
-    paddingVertical: 20,
+    width: '80%',
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 15,
+    elevation: 5,
   },
   item: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 15,
     borderBottomWidth: 1,
     borderBottomColor: '#ddd',
   },
+  selectedItem: {
+    backgroundColor: '#f0f0f0',
+  },
   itemText: {
     fontSize: 16,
-    marginLeft: 10,
   },
 });

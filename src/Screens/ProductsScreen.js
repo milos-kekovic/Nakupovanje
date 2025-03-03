@@ -1,11 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { View, Text, FlatList, StyleSheet, Image, TouchableOpacity, ImageBackground } from 'react-native';
 import { CustomButton } from '../Components';
-import { fetchChocolates, fetchIngredients } from '../supabase/supabaseClient'; // ✅ Import fetch functions
+import { ThemeContext, UserContext } from '../Context';
+import { fetchChocolates, fetchIngredients, loadTranslations } from '../supabase/supabaseClient'; // ✅ Import fetch functions
 
 export default function ProductsScreen({ navigation }) {
+  const { user } = useContext(UserContext);
+  const userLanguage = user?.language || 'en'; // ✅ Get user language from context
   const [products, setProducts] = useState([]);
   const [ingredients, setIngredients] = useState([]);
+  const [translations, setTranslations] = useState({});
   const [cart, setCart] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [loadingIngredients, setLoadingIngredients] = useState(true);
@@ -20,9 +24,12 @@ export default function ProductsScreen({ navigation }) {
 
       const chocolates = await fetchChocolates();
       const chocolateIngredients = await fetchIngredients();
+      console.log('userLanguage', userLanguage)
+      const translationsData = await loadTranslations(userLanguage); // ✅ Fetch ingredient translations
 
       setProducts(chocolates);
       setIngredients(chocolateIngredients);
+      setTranslations(translationsData);
 
       setLoadingProducts(false);
       setLoadingIngredients(false);
@@ -54,6 +61,10 @@ export default function ProductsScreen({ navigation }) {
     });
   };
 
+  const translateIngredient = (ingredientName) => {
+    return translations[ingredientName] || ingredientName; // ✅ Show translation if available
+  };
+
   const toggleIngredient = (ingredient) => {
     console.log('selectedIngredients ', selectedIngredients)
     setSelectedIngredients((prevSelected) =>
@@ -75,13 +86,13 @@ export default function ProductsScreen({ navigation }) {
           style={[styles.toggleButton, isContentVisible ? styles.activeButton : null]}
           onPress={() => setIsContentVisible(true)}
         >
-          <Text style={styles.toggleButtonText}>Nakup čokoladnih izdelkov</Text>
+          <Text style={styles.toggleButtonText}>{translations.buy_chocolate_products}</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.toggleButton, !isContentVisible ? styles.activeButton : null]}
           onPress={() => setIsContentVisible(false)}
         >
-          <Text style={styles.toggleButtonText}>Sestavi si čokolado sam</Text>
+          <Text style={styles.toggleButtonText}>{translations.make_your_own_chocolate}</Text>
         </TouchableOpacity>
       </View>
 
@@ -89,7 +100,7 @@ export default function ProductsScreen({ navigation }) {
       {isContentVisible ? (
         <View style={styles.container}>
           {loadingProducts ? (
-            <Text>Loading products...</Text>
+            <Text>{translations.loading_products}...</Text>
           ) : (
             <FlatList
               data={products}
@@ -102,11 +113,11 @@ export default function ProductsScreen({ navigation }) {
                     resizeMode="contain"
                   />
                   <View style={styles.productDetails}>
-                    <Text style={styles.productText}>{item.name}</Text>
+                    <Text style={styles.productText}>{translations[item.name]}</Text>
                     <Text style={styles.productPrice}>{item.price} €</Text>
                   </View>
                   <CustomButton
-                    text="Dodaj v košarico"
+                    text={translations.add_to_cart}
                     type="secondary"
                     onButtonPress={() => addToCart(item)}
                   />
@@ -115,7 +126,7 @@ export default function ProductsScreen({ navigation }) {
             />
           )}
           <CustomButton
-            text="Konec nakupa"
+            text={translations.end_shopping}
             type="secondary"
             onButtonPress={() => {
               navigation.navigate('Cart', { cart });
@@ -125,7 +136,7 @@ export default function ProductsScreen({ navigation }) {
       ) : (
         <View style={[styles.horizontalListContainer, { flexDirection: 'column', alignItems: 'center' }]}>
           {loadingIngredients ? (
-            <Text>Loading ingredients...</Text>
+            <Text>{translations.loading_ingredients}...</Text>
           ) : (
             <>
               <FlatList
@@ -145,7 +156,7 @@ export default function ProductsScreen({ navigation }) {
                       style={styles.productIngredientsImage}
                       resizeMode="contain"
                     />
-                    <Text style={styles.imageButtonText}>{item.name}</Text>
+                    <Text style={styles.imageButtonText}>{translateIngredient(item.name)}</Text>
                   </TouchableOpacity>
                 )}
                 showsHorizontalScrollIndicator={false} // Hide horizontal scroll bar
@@ -156,7 +167,7 @@ export default function ProductsScreen({ navigation }) {
                 {products
                   .filter(
                     (product) =>
-                      product.name === 'Temna čokolada' || product.name === 'Bela čokolada'
+                      product.name === 'dark_chocolate' || product.name === 'white_chocolate'
                   )
                   .map((item) => (
                     <TouchableOpacity
@@ -172,7 +183,7 @@ export default function ProductsScreen({ navigation }) {
                         style={styles.chocolateType}
                         resizeMode="contain"
                       />
-                      <Text style={styles.imageButtonText}>{item.name}</Text>
+                      <Text style={styles.imageButtonText}>{translateIngredient(item.name)}</Text>
                     </TouchableOpacity>
                   ))}
               </View>

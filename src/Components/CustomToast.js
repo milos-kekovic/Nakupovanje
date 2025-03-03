@@ -1,21 +1,31 @@
-// CustomToast.js
 import React, { useContext } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import Toast from 'react-native-toast-message';
-import { ThemeContext } from '../Context/ThemeContext'; // Adjust the path to your ThemeContext
+import { ThemeContext } from '../Context/ThemeContext'; 
 import { ThemeText } from '../Components';
+import { useElementPadding, useElementMargin, useElementSize, useBorderWidth, useBorderRadius } from '../Constants/Dimensions'; // ✅ Import dimensions
 
-export default CustomToast = () => {
+const CustomToast = () => {
   // Read theme context to get the current theme color
   const { theme } = useContext(ThemeContext);
+
+  // Fetch dynamic values for padding, margin, and size
+  const scaledElementPadding = useElementPadding();
+  const scaledElementMargin = useElementMargin();
+  const scaledElementSize = useElementSize();
+  const scaledBorderWidth = useBorderWidth();
+  const scaledBorderRadius = useBorderRadius();
 
   // Custom Toast Configuration
   const toastConfig = {
     info: ({ text1, props }) => (
-      <View style={[styles.toastContainer, { backgroundColor: theme.buttonBackgroundColor }]}>
-        <ThemeText type="popupBodyText">
-        {text1}
-        </ThemeText>
+      <View style={[styles.toastContainer, { 
+        backgroundColor: theme.primaryColor, 
+        padding: scaledElementPadding,
+        borderWidth: scaledBorderWidth,
+        borderRadius: scaledBorderRadius
+      }]}>
+        <ThemeText type="errorMessage">{text1}</ThemeText>
       </View>
     ),
   };
@@ -25,15 +35,9 @@ export default CustomToast = () => {
 
 const styles = StyleSheet.create({
   toastContainer: {
-    //width: '80%',
-    padding: 15,
-    borderRadius: 8,
     alignItems: 'flex-start',
     justifyContent: 'flex-start',
   },
-  toastText: {
-    color: '#fff',
-    fontSize: 16,
-    textAlign: 'center',
-  },
 });
+
+export default CustomToast;

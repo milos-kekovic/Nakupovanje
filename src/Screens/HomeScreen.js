@@ -3,25 +3,24 @@ import { useFocusEffect } from '@react-navigation/native';
 import { View, Text, ImageBackground, StyleSheet, ActivityIndicator } from 'react-native';
 import { ThemeContext, UserContext } from '../Context';
 import { CustomButton, ThemeInput, CustomPicker } from '../Components';
-import { fontSize as FS } from '../Constants/Dimensions';
+import Toast from 'react-native-toast-message';
 import Logo from '../Components/Logo';
 import { useTranslation } from 'react-i18next';
 import { fetchLanguages, loadTranslations } from '../supabase/supabaseClient'; // ✅ Import languages from Supabase
-import { useFontSize, useElementPadding, useElementMargin, useElementSize } from '../Constants/Dimensions'
+import { useElementMargin, useElementSize } from '../Constants/Dimensions';
 
 const BackgroundImage = require('../../assets/chocolate-background.jpg');
 
 export default function HomeScreen({ navigation }) {
   const { user: { userName: userID, language }, setUser } = useContext(UserContext);
-  const [userName, setUserName] = useState(''); // ✅ Add this line
+  const [userName, setUserName] = useState('');
   const { t, i18n } = useTranslation();
   const { theme } = useContext(ThemeContext);
   const [translations, setTranslations] = useState(null);
-  const [forceUpdate, setForceUpdate] = useState(true);
-  const [languages, setLanguages] = useState([]); // ✅ Store languages fetched from Supabase
-  const selectedLanguageCode = language || i18n.language;
+  const [languages, setLanguages] = useState([]);
   const [selectedLanguage, setSelectedLanguage] = useState(null);
   const scaledElementSize = useElementSize();
+  const scaledElementMargin = useElementMargin();
 
   // ✅ Fetch languages from Supabase
   useEffect(() => {
@@ -38,7 +37,6 @@ export default function HomeScreen({ navigation }) {
         setLanguages(fetchedLanguages);
         const initialLang = fetchedLanguages.find(lang => lang.code === language) || fetchedLanguages[0];
         setSelectedLanguage(initialLang);
-        console.log("fetchedLanguages: ", fetchedLanguages);
       } catch (error) {
         console.error("❌ Error fetching languages:", error);
       }
@@ -46,17 +44,15 @@ export default function HomeScreen({ navigation }) {
     loadLanguages();
   }, []);
 
+  // ✅ Fetch translations when language changes
   useEffect(() => {
-    if (selectedLanguage) {
-      console.log(`Fetching translations for: ${selectedLanguage.code}`);
-    }
-  }, [selectedLanguage]);
-  
-
-  useEffect(() => {
+    if (!selectedLanguage) return;
+    
+    console.log(`Fetching translations for: ${selectedLanguage.code}`);
+    
     const fetchData = async () => {
       try {
-        const data = await loadTranslations(i18n.language);
+        const data = await loadTranslations(selectedLanguage.code);
         setTranslations(data);
         setUser(prevUser => ({ ...prevUser, translations: data }));
       } catch (error) {
@@ -64,12 +60,12 @@ export default function HomeScreen({ navigation }) {
       }
     };
     fetchData();
-  }, [i18n.language]);
+  }, [selectedLanguage]);
 
-  // Clear the TextInput when the screen is focused
+  // ✅ Reset the TextInput when the screen is focused
   useFocusEffect(
     useCallback(() => {
-      setUserName(''); // Clear the userName input
+      setUserName('');
     }, [])
   );
 
@@ -84,68 +80,84 @@ export default function HomeScreen({ navigation }) {
 
   return (
     <ImageBackground 
-      style={{flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.primaryColor}}
+      style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.primaryColor }}
       source={BackgroundImage} 
       resizeMode="stretch"
     >
-      <View style={{flex: 0.4, width: '95%', justifyContent: 'flex-start', alignItems: 'flex-end'}}>
-        {/* Language Dropdown */}
-        <View>
-          <CustomPicker
-            style={{ width: '100%' }}
-            label={translations.choose_language}
-            sort={false}
-            selectedValue={selectedLanguage}
-            onValueChange={(value) => {
-              setSelectedLanguage(value);
-              i18n.changeLanguage(value.code);
-              setUser(prevUser => ({ ...prevUser, language: value.code }));
-            }}
-            options={languages}
-          />
-        </View>
-        </View>
-        <View style={{flex: 0.6}}>
-        <Logo isPopup={true} size={scaledElementSize * 2} />
+      <View style={{
+        flex: 0.4,
+        justifyContent: 'flex-start',
+        alignItems: 'flex-end',  // ✅ Aligns to the right
+        padding: scaledElementMargin
+      }}>
+        {/* ✅ Improved Language Picker UI */}
+        <CustomPicker
+          selectedValue={selectedLanguage}
+          onValueChange={(value) => {
+            setSelectedLanguage(value);
+            i18n.changeLanguage(value.code);
+            setUser(prevUser => ({ ...prevUser, language: value.code }));
+          }}
+          options={languages}
+          placeholder={translations.choose_language}
+        />
+      </View>
+
+      <View style={styles.mainContainer}>
+        <Logo isPopup={true} size={scaledElementSize * 3} />
+
+        {/* ✅ Improved ThemeInput */}
         <ThemeInput
-          key={forceUpdate}
-          style={{ marginBottom: FS * 0.5}}
-          label="Tvoje ime in priimek"
+          style={{ marginVertical: scaledElementMargin }}
+          label={translations.first_and_last_name}
           required={true}
           returnKeyType="done"
           blurOnSubmit={false}
           clearButtonMode="always"
           multiline={false}
           value={userName}
-          placeholder="Vpiši svoje ime in priimek"
+          placeholder={translations.first_and_last_name}
           onChangeText={setUserName}
         />
 
+        {/* ✅ Start Shopping Button */}
         <CustomButton
-          text={translations.start_quiz}
-          type="primary"            
+          text={translations.start_shopping}
+          type="primary"
           onButtonPress={() => {
-            if (userName) {
-              setUser(prevUser => ({ ...prevUser, userName })); // Set the user name in context
-              navigation.navigate('Products'); // Pass grid size to MemoryScreen
+            if (userName.trim()) {
+              setUser(prevUser => ({ ...prevUser, userName }));
+              navigation.navigate('Products');
             } else {
               Toast.show({
                 type: 'info',
-                text1: 'Najprej vnesi svoje ime in priimek',
+                text1: translations.enter_name_warning,
                 visibilityTime: 2500,
               });
             }
           }}
         />
-        </View>
+      </View>
     </ImageBackground>
   );
 }
 
+// ✅ Styles
 const styles = StyleSheet.create({
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  languagePickerContainer: {
+    flex: 0.4,
+    justifyContent: 'flex-start',
+    alignItems: 'flex-end',  // ✅ Aligns to the right
+    paddingRight: 10,
+  },
+  mainContainer: {
+    flex: 0.6,
+    alignItems: 'center',
   },
 });
+
